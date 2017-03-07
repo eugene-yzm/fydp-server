@@ -15,43 +15,44 @@ from django.core.validators import validate_email
 from django import forms
 import bcrypt
 
-
-class UserList(generics.ListAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-
+# Unused Functions
+#
+# class UserList(generics.ListAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#
+#
+# # class UserViewSet(viewsets.ModelViewSet):
+# #     """
+# #     API endpoint that allows users to be viewed or edited.
+# #     """
+# #     queryset = User.objects.all().order_by('-date_joined')
+# #     serializer_class = UserSerializer
+# # # Create your views here.
+#
+#
+# class UserDetail(generics.RetrieveAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#
+#
+# class JSONResponse(HttpResponse):
+#     """
+#     An HttpResponse that renders its content into JSON.
+#     """
+#     def __init__(self, data, **kwargs):
+#         content = JSONRenderer().render(data)
+#         kwargs['content_type'] = 'application/json'
+#         super(JSONResponse, self).__init__(content, **kwargs)
+#
+#
+# @csrf_exempt
 # class UserViewSet(viewsets.ModelViewSet):
 #     """
 #     API endpoint that allows users to be viewed or edited.
 #     """
 #     queryset = User.objects.all().order_by('-date_joined')
 #     serializer_class = UserSerializer
-# # Create your views here.
-
-
-class UserDetail(generics.RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-
-class JSONResponse(HttpResponse):
-    """
-    An HttpResponse that renders its content into JSON.
-    """
-    def __init__(self, data, **kwargs):
-        content = JSONRenderer().render(data)
-        kwargs['content_type'] = 'application/json'
-        super(JSONResponse, self).__init__(content, **kwargs)
-
-
-@csrf_exempt
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-    queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
 
 
 @csrf_exempt
@@ -105,14 +106,15 @@ def data_detail(request, pk):
     #     datapoint.delete()
     #     return HttpResponse(status=204)
 
-
+@csrf_exempt
 def user_data(request):
     """
-    List all code snippets, or create a new snippet.
+    :type: HttpRequest
+    :rtype: JSONResponse
     """
     if request.method == 'GET':
         params = request.GET
-
+        print request
         if email_is_valid(params.get('email')):
             if user_exists(params.get('email')):
                 user = find_user(params.get('email'))
@@ -126,14 +128,19 @@ def user_data(request):
         else:
             return JSONResponse('Reason: Invalid Email', status=400)
 
-
+@csrf_exempt
 def create_user(request):
-    data = JSONParser().parse(request)
-    serializer = DataPointSerializer(data=data)
-    if serializer.is_valid():
-        serializer.save()
-        return JSONResponse(serializer.data)
-    return JSONResponse(serializer.errors, status=400)
+    if request.method == 'POST':
+        data = JSONParser().parse(request)
+        if all([k in data for k in ['password', 'email', 'name']]):
+            serializer = UserSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return JSONResponse(serializer.data)
+            return JSONResponse(serializer.errors, status=400)
+        else:
+            return JSONResponse('Reason: Missing Information or Invalid Input', status=400)
+    return JSONResponse('Something went wrong', status=400)
 
 
 def user_exists(email):
