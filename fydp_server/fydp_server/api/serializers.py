@@ -22,7 +22,7 @@ class DataPointSerializer(serializers.ModelSerializer):
         """
         Create and return a new `DataPoint` instance, given the validated data.
         """
-        return DataPoint(**validated_data)
+        return DataPoint.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         """
@@ -43,13 +43,13 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 'password', 'datapoints')
+        fields = ('id', 'name', 'email', 'password', 'access_data_key', 'datapoints')
 
     def create(self, validated_data):
         """
         Create and return a new `User` instance, given the validated data.
         """
-        return User(**validated_data)
+        return User.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         """

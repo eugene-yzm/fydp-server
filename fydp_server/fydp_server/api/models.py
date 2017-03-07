@@ -6,6 +6,7 @@ class User(models.Model):
     email = models.CharField(max_length=100, blank=False, unique=True)
     name = models.CharField(max_length=100, blank=False)
     password = models.CharField(max_length=64, blank=False)
+    access_data_key= models.CharField(max_length=64, blank=False)
 
 
 class DataPoint(models.Model):

@@ -71,6 +71,7 @@ TEMPLATES = [
     },
 ]
 
+# Could use nginx/ Apache if things are too slow, not really necessary for our scale
 WSGI_APPLICATION = 'fydp_server.wsgi.application'
 
 
