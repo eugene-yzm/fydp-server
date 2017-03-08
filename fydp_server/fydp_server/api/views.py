@@ -83,16 +83,19 @@ def data_list(request):
         # return JSONResponse(serializer.errors, status=400)
 
     elif request.method == 'POST':
+        params = request.GET
         data = JSONParser().parse(request)
-        response = authenticate(data)
+        response = authenticate(params)
         if response is None:
-            user = find_user('access_key', data['access_data_key'])
-            data['user'] = user
-            serializer = DataPointSerializer(data=data)
-            if serializer.is_valid():
-                serializer.save()
-                return JSONResponse(serializer.data, status=201)
-            return JSONResponse(serializer.errors, status=400)
+            user = find_user('access_data_key', params.get('access_data_key'))
+            if user is not None:
+                data['user'] = user.id
+                print data
+                serializer = DataPointSerializer(data=data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return JSONResponse(serializer.data, status=201)
+                return JSONResponse(serializer.errors, status=400)
         else:
             return response
 

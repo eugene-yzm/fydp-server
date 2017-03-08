@@ -14,14 +14,16 @@ from models import DataPoint, User
 
 
 class DataPointSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = DataPoint
-        fields = ('id', 'created' ,'time', 'tag','temperature','humidity','orientation')
+        fields = ('id', 'created' ,'time', 'user', 'tag','temperature','humidity','orientation')
 
     def create(self, validated_data):
         """
         Create and return a new `DataPoint` instance, given the validated data.
         """
+        print validated_data
         return DataPoint.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
