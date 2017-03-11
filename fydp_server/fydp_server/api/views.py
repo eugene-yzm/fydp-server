@@ -142,7 +142,7 @@ def user_data(request):
             return JSONResponse(serializer.data)
         else:
             return response
-
+    return JSONResponse({'Reason': 'Something went wrong'}, status=400)
 
 @csrf_exempt
 def create_user(request):
@@ -154,7 +154,7 @@ def create_user(request):
         data = JSONParser().parse(request)
         if all([k in data for k in ['password', 'email', 'name']]):
             data['password'] = hash_password(data['password'])
-            data['data_post_key'] = hash_password(data['password'])
+            data['access_data_key'] = hash_password(data['password'])
             serializer = UserSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
