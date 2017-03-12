@@ -8,13 +8,13 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from rest_framework.exceptions import ParseError
-from models import DataPoint, User
-from serializers import DataPointSerializer
-from serializers import UserSerializer
+from models import DataPoint, Cycle, User
+from serializers import DataPointSerializer, CycleSerializer, UserSerializer
 from rest_framework import generics
 from django.core.validators import validate_email
 from django import forms
 import bcrypt
+import datetime
 
 
 class JSONResponse(HttpResponse):
@@ -67,7 +67,8 @@ def data_list(request):
         if response is None:
             user = find_user('access_data_key', params['access_data_key'])
             data = DataPoint.objects.filter(user=user)
-            print data
+            if params.get('tag'):
+                data = data.filter(tag=params.get('tag'))
             serializer = DataPointSerializer(data, many=True)
             return JSONResponse(serializer.data)
         else:
@@ -90,7 +91,6 @@ def data_list(request):
             user = find_user('access_data_key', params.get('access_data_key'))
             if user is not None:
                 data['user'] = user.id
-                print data
                 serializer = DataPointSerializer(data=data)
                 if serializer.is_valid():
                     serializer.save()
@@ -98,6 +98,78 @@ def data_list(request):
                 return JSONResponse(serializer.errors, status=400)
         else:
             return response
+
+
+@csrf_exempt
+def cycle(request):
+    """
+    Check existing cycle
+    """
+    if request.method == 'GET':
+        params = request.GET
+        response = authenticate(params)
+        if response is None:
+            user = find_user('access_data_key', params['access_data_key'])
+            data = Cycle.objects.filter(user=user)
+            data = data.filter(tag=params.get('tag'))
+            if len(data)>0:
+                serializer = CycleSerializer(data[0])
+                return JSONResponse(serializer.data, status=201)
+            else:
+                JSONResponse({'Reason': 'No cycle exists'}, status=400)
+        else:
+            return response
+
+    """
+    Create new cycle
+    """
+    if request.method == 'POST':
+        params = request.GET
+        data = JSONParser().parse(request)
+        response = authenticate(params)
+        if response is None:
+            user = find_user('access_data_key', params.get('access_data_key'))
+            if user is not None and is_numeric(data['time']):
+                data['user'] = user.id
+                start_time = datetime.datetime.fromtimestamp(float(data['time']))
+                data['start_time'] = start_time
+                serializer = CycleSerializer(data=data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return JSONResponse(serializer.data, status=201)
+                return JSONResponse(serializer.errors, status=400)
+        else:
+            return response
+    return JSONResponse({'Reason': 'Something went wrong'}, status=400)
+
+
+@csrf_exempt
+def finish_cycle(request):
+    """
+    Finish cycle
+    """
+    if request.method == 'POST':
+        params = request.GET
+        data = JSONParser().parse(request)
+        response = authenticate(params)
+        if response is None:
+            user = find_user('access_data_key', params.get('access_data_key'))
+            if user is not None and is_numeric(data['time']):
+                data['done'] = True
+                data['user'] = user.id
+                end_time = datetime.datetime.fromtimestamp(float(data['time']))
+                data['end_time'] = end_time
+                user = find_user('access_data_key', params['access_data_key'])
+                c = Cycle.objects.filter(user=user)
+                c = c.filter(tag=params.get('tag'))
+                serializer = CycleSerializer(c[0], data=data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return JSONResponse(serializer.data, status=201)
+                return JSONResponse(serializer.errors, status=400)
+        else:
+            return response
+    return JSONResponse({'Reason': 'Something went wrong'}, status=400)
 
 
 @csrf_exempt
@@ -143,6 +215,7 @@ def user_data(request):
         else:
             return response
     return JSONResponse({'Reason': 'Something went wrong'}, status=400)
+
 
 @csrf_exempt
 def create_user(request):
@@ -216,7 +289,6 @@ def find_user(by_type, val):
         return None
 
 
-
 def check_auth(user, password):
     """
     :type: User, string
@@ -244,3 +316,11 @@ def hash_password(password):
     :rtype: boolean
     """
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+
+def is_numeric(data):
+    try:
+        float(data)
+        return True
+    except ValueError:
+        return False

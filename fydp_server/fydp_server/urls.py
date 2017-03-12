@@ -14,4 +14,6 @@ urlpatterns = [
     url(r'^data/(?P<pk>[0-9]+)/$', views.data_detail),
     url(r'^user/$', views.user_data),
     url(r'^user/register/$', views.create_user),
+    url(r'^cycles/$', views.cycle),
+    url(r'^cycles/finish/$', views.finish_cycle),
 ]

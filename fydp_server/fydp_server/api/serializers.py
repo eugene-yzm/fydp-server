@@ -1,6 +1,6 @@
 #from django.contrib.auth.models import User
 from rest_framework import serializers
-from models import DataPoint, User
+from models import DataPoint, Cycle, User
 
 
 # class DataPointSerializer(serializers.ModelSerializer):
@@ -23,14 +23,13 @@ class DataPointSerializer(serializers.ModelSerializer):
         """
         Create and return a new `DataPoint` instance, given the validated data.
         """
-        print validated_data
         return DataPoint.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         """
         Update and return an existing `DataPoint` instance, given the validated data.
         """
-        instance.title = validated_data.get('tag', instance.tag)
+        instance.tag = validated_data.get('tag', instance.tag)
         instance.time = validated_data.get('time', instance.time)
         instance.temperature = validated_data.get('temperature', instance.temperature)
         instance.humidity = validated_data.get('humidity', instance.humidity)
@@ -40,12 +39,37 @@ class DataPointSerializer(serializers.ModelSerializer):
         return instance
 
 
+class CycleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Cycle
+        fields = ('id', 'created', 'user', 'tag', 'start_time', 'end_time', 'recommendations', 'done')
+
+    def create(self, validated_data):
+        """
+        Create and return a new `Cycle` instance, given the validated data.
+        """
+        return Cycle.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `Cycle` instance, given the validated data.
+        """
+        instance.recommendations = validated_data.get('recommendations', instance.recommendations)
+        instance.user = validated_data.get('user', instance.user)
+        instance.end_time = validated_data.get('end_time', instance.end_time)
+        instance.done = validated_data.get('done', instance.done)
+        instance.save()
+        return instance
+
+
 class UserSerializer(serializers.ModelSerializer):
     datapoints = DataPointSerializer(many=True, read_only=True)
+    cycles = CycleSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 'password', 'access_data_key', 'datapoints')
+        fields = ('id', 'name', 'email', 'password', 'access_data_key', 'cycles', 'datapoints')
 
     def create(self, validated_data):
         """

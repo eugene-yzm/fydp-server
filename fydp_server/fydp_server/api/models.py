@@ -18,6 +18,15 @@ class DataPoint(models.Model):
     humidity = models.CharField(max_length=10)
     orientation = models.CharField(max_length=100)
 
-
     class Meta:
         ordering = ['id']
+
+
+class Cycle(models.Model):
+    user = models.ForeignKey(User, related_name='cycles')
+    created = models.DateTimeField(auto_now_add=True)
+    tag = models.CharField(max_length=100, blank=True, default='')
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    recommendations = models.CharField(max_length=100, blank=True, default='')
+    done = models.BooleanField(default=False)
